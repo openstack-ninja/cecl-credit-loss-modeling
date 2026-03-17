@@ -3,10 +3,10 @@
 Original project performs monte carlo simulations at the aggregate level, not at the loan level
 This repo implements a loan-level monte carlo simulation, which is more computationally intensive but allows for more granular risk analysis and better captures the distribution of losses across the portfolio. 
 
-To run this 
-    - clone this repor
-    - download https://github.com/wikihifi/cecl-credit-loss-modeling/releases/download/data-bundle-v1/loan_level_combined.parquet  
-    - python src/run_monte_carlo_custom_backend.py --backend cpu --n-simulations 
+To run:
+1. clone this repo
+2. download https://github.com/wikihifi/cecl-credit-loss-modeling/releases/download/data-bundle-v1/loan_level_combined.parquet  
+3. run python src/run_monte_carlo_custom_backend.py --backend cpu --n-simulations 1000
 backends available: cpu, mps, cuda 
 
 # CECL Credit Risk Modeling Pipeline
