@@ -77,3 +77,6 @@ mlruns/
 
 # ---- Jupyter ----
 .ipynb_checkpoints/
+models/mc_loss_distribution.csv
+models/mc_scenarios.csv
+data/processed/loan_level_combined.parquet
