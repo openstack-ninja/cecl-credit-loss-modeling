@@ -1,3 +1,14 @@
+# Fork updates
+
+Original project performs monte carlo simulations at the aggregate level, not at the loan level
+This repo implements a loan-level monte carlo simulation, which is more computationally intensive but allows for more granular risk analysis and better captures the distribution of losses across the portfolio. 
+
+To run this 
+    - clone this repor
+    - download https://github.com/wikihifi/cecl-credit-loss-modeling/releases/download/data-bundle-v1/loan_level_combined.parquet  
+    - python src/run_monte_carlo_custom_backend.py --backend cpu --n-simulations 
+backends available: cpu, mps, cuda 
+
 # CECL Credit Risk Modeling Pipeline
 
 An end-to-end credit risk modeling framework implementing CECL (Current Expected Credit Loss) lifetime loss estimation, Federal Reserve stress testing, and Monte Carlo simulation on 3.8 million Fannie Mae mortgage loans ($694B portfolio).
