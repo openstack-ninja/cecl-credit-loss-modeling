@@ -428,19 +428,38 @@ def _aggregate_portfolio_losses_tensor(
     n_scenarios = multipliers_t.shape[0]
     losses_t = torch.zeros(n_scenarios, device=portfolio_upb_t.device, dtype=portfolio_upb_t.dtype)
 
+    # Pre-allocate buffers for the inner loop to avoid repeated memory allocations
+    # which can be extremely slow on CPU/MPS backends.
+    max_chunk = min(loan_chunk_size, n_loans)
+    max_batch = min(scenario_batch_size, n_scenarios)
+
+    spd_buffer = torch.empty(
+        (max_batch, max_chunk),
+        device=portfolio_upb_t.device,
+        dtype=portfolio_upb_t.dtype
+    )
+    buf_buffer = torch.empty(
+        (max_batch, max_chunk),
+        device=portfolio_upb_t.device,
+        dtype=portfolio_upb_t.dtype
+    )
+
     for start_scenario in range(0, n_scenarios, scenario_batch_size):
         end_scenario = min(start_scenario + scenario_batch_size, n_scenarios)
+        batch_size = end_scenario - start_scenario
+
         batch_multipliers = multipliers_t[start_scenario:end_scenario]
         pd_delta = batch_multipliers[:, 0] - 1.0
         lgd_delta = batch_multipliers[:, 1] - 1.0
         batch_losses = torch.zeros(
-            end_scenario - start_scenario,
+            batch_size,
             device=portfolio_upb_t.device,
             dtype=portfolio_upb_t.dtype,
         )
 
         for start_loan in range(0, n_loans, loan_chunk_size):
             end_loan = min(start_loan + loan_chunk_size, n_loans)
+            chunk_size = end_loan - start_loan
 
             upb_chunk = portfolio_upb_t[start_loan:end_loan]
             pd_chunk = pd_baseline_t[start_loan:end_loan]
@@ -448,17 +467,27 @@ def _aggregate_portfolio_losses_tensor(
             pd_sens_chunk = pd_sensitivity_t[start_loan:end_loan]
             lgd_sens_chunk = lgd_sensitivity_t[start_loan:end_loan]
 
-            stressed_pd_multiplier = 1.0 + pd_delta[:, None] * pd_sens_chunk[None, :]
-            stressed_lgd_multiplier = 1.0 + lgd_delta[:, None] * lgd_sens_chunk[None, :]
+            spd = spd_buffer[:batch_size, :chunk_size]
+            buf = buf_buffer[:batch_size, :chunk_size]
 
-            stressed_pd = torch.clamp(pd_chunk[None, :] * stressed_pd_multiplier, 0.0, 1.0)
-            stressed_lgd = torch.clamp(lgd_chunk[None, :] * stressed_lgd_multiplier, 0.0, 1.5)
+            # In-place operations for stressed_pd computation
+            torch.outer(pd_delta, pd_sens_chunk, out=spd)
+            spd.add_(1.0)
+            spd.mul_(pd_chunk)
+            torch.clamp_(spd, min=0.0, max=1.0)
 
-            chunk_losses = torch.sum(
-                upb_chunk[None, :] * stressed_pd * stressed_lgd,
-                dim=1,
-            )
-            batch_losses = batch_losses + chunk_losses
+            # In-place operations for stressed_lgd computation
+            torch.outer(lgd_delta, lgd_sens_chunk, out=buf)
+            buf.add_(1.0)
+            buf.mul_(lgd_chunk)
+            torch.clamp_(buf, min=0.0, max=1.5)
+
+            # Combine and aggregate
+            buf.mul_(spd)
+            buf.mul_(upb_chunk)
+
+            chunk_losses = torch.sum(buf, dim=1)
+            batch_losses.add_(chunk_losses)
 
         losses_t[start_scenario:end_scenario] = batch_losses
 
