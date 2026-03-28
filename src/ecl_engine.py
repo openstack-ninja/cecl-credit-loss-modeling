@@ -499,7 +499,9 @@ def compute_scenario_weighted_ecl(summaries, weights):
         Weighted ECL summary.
     """
     total_weight = sum(weights.values())
-    assert np.isclose(total_weight, 1.0), f"Weights must sum to 1.0, got {total_weight}"
+
+    # We use a broader epsilon for floating point comparison to handle float imprecision properly
+    assert abs(total_weight - 1.0) < 1e-6, f"Weights must sum to 1.0, got {total_weight}"
 
     weighted_ecl = 0.0
     print(f"\n  Scenario-Weighted ECL:")
