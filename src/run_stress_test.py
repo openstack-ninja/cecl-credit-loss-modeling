@@ -239,25 +239,28 @@ def main():
     cum_loss = 0.0
     quarterly_results = []
 
-    for _, mrow in multipliers.iterrows():
-        pd_stressed = np.clip(pd_baseline * mrow["pd_multiplier"], 0.0, 0.99)
-        lgd_stressed = np.clip(lgd_baseline * mrow["lgd_multiplier"], 0.0, 1.0)
+    for mrow in multipliers.itertuples():
+        pd_stressed = pd_baseline * mrow.pd_multiplier
+        np.clip(pd_stressed, 0.0, 0.99, out=pd_stressed)
 
-        quarterly_el = (pd_stressed * lgd_stressed * upb).sum() / 4.0
+        lgd_stressed = lgd_baseline * mrow.lgd_multiplier
+        np.clip(lgd_stressed, 0.0, 1.0, out=lgd_stressed)
+
+        quarterly_el = np.dot(pd_stressed * lgd_stressed, upb) / 4.0
         cum_loss += quarterly_el
 
         mean_pd = pd_stressed.mean()
         mean_lgd = lgd_stressed.mean()
 
-        print(f"  {mrow['quarter']:<10s} {mrow['pd_multiplier']:>7.2f}x "
-              f"{mrow['lgd_multiplier']:>8.2f}x {mean_pd*100:>7.2f}% "
+        print(f"  {mrow.quarter:<10s} {mrow.pd_multiplier:>7.2f}x "
+              f"{mrow.lgd_multiplier:>8.2f}x {mean_pd*100:>7.2f}% "
               f"{mean_lgd*100:>8.2f}% ${quarterly_el/1e6:>11,.0f} "
               f"${cum_loss/1e6:>13,.0f}")
 
         quarterly_results.append({
-            "quarter": mrow["quarter"],
-            "pd_multiplier": mrow["pd_multiplier"],
-            "lgd_multiplier": mrow["lgd_multiplier"],
+            "quarter": mrow.quarter,
+            "pd_multiplier": mrow.pd_multiplier,
+            "lgd_multiplier": mrow.lgd_multiplier,
             "mean_pd": mean_pd,
             "mean_lgd": mean_lgd,
             "quarterly_el": quarterly_el,
