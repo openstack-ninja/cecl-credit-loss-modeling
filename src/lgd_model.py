@@ -37,7 +37,6 @@ Non-defaulted loans are excluded because they have no observed loss.
 Author: Saurabh Chavan
 """
 
-import gc
 import time
 import warnings
 import numpy as np
