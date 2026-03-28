@@ -418,22 +418,34 @@ def compute_portfolio_ecl(loans_df, pd_predictions, lgd_predictions,
     age = np.clip(age, 0, 480)
 
     # Compute ECL for each loan
-    ecl_values = np.zeros(n_loans)
-    current_balance = np.zeros(n_loans)
+    # Vectorized computation
+    remaining_months = np.maximum(term - age, 0)
 
-    for i in range(n_loans):
-        ecl_values[i] = compute_loan_ecl(
-            original_upb=upb[i],
-            annual_rate=rate[i],
-            loan_term_months=int(term[i]),
-            current_age=int(age[i]),
-            pd_12m=pd_arr[i],
-            lgd=lgd_arr[i],
+    current_balance = compute_scheduled_balance(upb, rate, term, age)
+
+    max_rem = int(np.max(remaining_months, initial=0))
+    if max_rem <= 0:
+        ecl_values = np.zeros(n_loans)
+    else:
+        monthly_pd = build_pd_term_structure(pd_arr, remaining_months)
+        max_months = monthly_pd.shape[1]
+
+        future_months = np.arange(1, max_months + 1)
+        future_ages = age[:, None] + future_months[None, :]
+        future_ages = np.minimum(future_ages, term[:, None])
+
+        ead_schedule = compute_scheduled_balance(
+            upb[:, None], rate[:, None], term[:, None], future_ages
         )
-        # Current balance for ECL rate calculation
-        current_balance[i] = compute_scheduled_balance(
-            upb[i], rate[i], int(term[i]), int(age[i])
-        )
+
+        monthly_dr = rate / 12.0
+        discount_factors = 1.0 / (1.0 + monthly_dr[:, None]) ** future_months[None, :]
+
+        ecl_values = np.sum(monthly_pd * lgd_arr[:, None] * ead_schedule * discount_factors, axis=1)
+
+        # Zero out invalid records as handled in compute_loan_ecl
+        valid_mask = (remaining_months > 0) & (pd_arr > 0) & (lgd_arr > 0)
+        ecl_values = np.where(valid_mask, ecl_values, 0.0)
 
     elapsed = time.time() - t0
 
