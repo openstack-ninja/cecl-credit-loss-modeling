@@ -288,9 +288,12 @@ def extract_loan_level_features(quarter_path, quarter_label):
             age_at_default.name = "loan_age_at_default"
 
             # Modification flag: did the loan get modified before defaulting?
+            # Optimized: check equality first, then groupby max to avoid slow .apply()
             was_modified = (
-                df_defaulted.groupby(level="loan_id")["modification_flag"]
-                .apply(lambda s: int((s == "Y").any()))
+                (df_defaulted["modification_flag"] == "Y")
+                .groupby(level="loan_id")
+                .max()
+                .astype(int)
             )
             was_modified.name = "was_modified"
 
