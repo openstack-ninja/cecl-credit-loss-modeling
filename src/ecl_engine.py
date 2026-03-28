@@ -481,15 +481,10 @@ def compute_portfolio_ecl(loans_df, pd_predictions, lgd_predictions,
 
 def compute_scenario_weighted_ecl(summaries, weights):
     """
-    Compute scenario-weighted ECL per CECL requirements.
+    Combine multiple scenario ECLs into a single probability-weighted ECL.
 
-    CECL requires banks to consider multiple economic scenarios and
-    weight them by their probability of occurrence.
-
-    Typical weights:
-        Baseline: 50% (most likely outcome)
-        Adverse: 30% (downside risk)
-        Optimistic: 20% (upside possibility)
+    CECL requires incorporating multiple forward-looking macroeconomic
+    scenarios to capture non-linear losses under stress.
 
     Parameters
     ----------
@@ -504,8 +499,7 @@ def compute_scenario_weighted_ecl(summaries, weights):
         Weighted ECL summary.
     """
     total_weight = sum(weights.values())
-    if abs(total_weight - 1.0) > 0.01:
-        print(f"  WARNING: Scenario weights sum to {total_weight:.2f}, not 1.0")
+    assert np.isclose(total_weight, 1.0), f"Weights must sum to 1.0, got {total_weight}"
 
     weighted_ecl = 0.0
     print(f"\n  Scenario-Weighted ECL:")
