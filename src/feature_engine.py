@@ -200,13 +200,12 @@ def extract_loan_level_features(quarter_path, quarter_label):
     # (b) Check if loan ever had a default-related zero balance code.
     # Zero balance code is a string field. We check if any observation
     # for a loan has a code in our default set.
-    def has_default_zb_code(series):
-        """Check if any value in the series is a default zero balance code."""
-        return int(series.isin(DEFAULT_ZERO_BALANCE_CODES).any())
-
     zb_default = (
-        df.groupby("loan_id")["zero_balance_code"]
-        .apply(has_default_zb_code)
+        df["zero_balance_code"]
+        .isin(DEFAULT_ZERO_BALANCE_CODES)
+        .groupby(df["loan_id"])
+        .max()
+        .astype(int)
     )
 
     # Combine: default if EITHER condition is met
