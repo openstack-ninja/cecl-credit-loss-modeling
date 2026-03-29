@@ -24,6 +24,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from pd_model import apply_woe_transformation
 from monte_carlo import (
+    PortfolioData,
     compute_historical_macro_stats,
     run_monte_carlo,
     compute_risk_metrics,
@@ -82,6 +83,12 @@ def main():
     del X_lgd, df
     gc.collect()
 
+    portfolio_data = PortfolioData(
+        upb=portfolio_upb,
+        pd_baseline=pd_baseline,
+        lgd_baseline=lgd_baseline,
+    )
+
     baseline_el = (pd_baseline * lgd_baseline * portfolio_upb).sum()
     print(f"  Baseline PD: {pd_baseline.mean()*100:.2f}%")
     print(f"  Baseline LGD: {lgd_baseline.mean()*100:.2f}%")
@@ -115,8 +122,7 @@ def main():
     print(f"{'='*70}")
 
     losses, scenarios = run_monte_carlo(
-        portfolio_upb, pd_baseline, lgd_baseline,
-        macro_stats, n_simulations=N_SIMULATIONS,
+        portfolio_data, macro_stats, n_simulations=N_SIMULATIONS,
     )
 
     # ------------------------------------------------------------------
@@ -136,7 +142,7 @@ def main():
     print(f"{'='*70}")
 
     sensitivity_df = sensitivity_analysis(
-        portfolio_upb, pd_baseline, lgd_baseline, macro_stats
+        portfolio_data, macro_stats
     )
 
     # ------------------------------------------------------------------

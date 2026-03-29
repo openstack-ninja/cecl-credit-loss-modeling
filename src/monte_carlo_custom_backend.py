@@ -32,6 +32,8 @@ from typing import Dict, List, Mapping, Sequence, Tuple
 import numpy as np
 import pandas as pd
 
+from monte_carlo import PortfolioData
+
 warnings.filterwarnings("ignore")
 
 
@@ -118,11 +120,7 @@ def _scenario_tensor_to_dataframe(scenarios_tensor, variable_names: Sequence[str
 
 
 def _prepare_portfolio_tensors(
-    portfolio_upb,
-    pd_baseline,
-    lgd_baseline,
-    pd_sensitivity,
-    lgd_sensitivity,
+    portfolio_data: PortfolioData,
     backend,
     dtype,
 ):
@@ -131,19 +129,19 @@ def _prepare_portfolio_tensors(
     device = resolve_backend_device(backend)
     torch_dtype = _resolve_torch_dtype(dtype, device)
 
-    portfolio_upb_t = torch.as_tensor(portfolio_upb, device=device, dtype=torch_dtype)
-    pd_baseline_t = torch.as_tensor(pd_baseline, device=device, dtype=torch_dtype)
-    lgd_baseline_t = torch.as_tensor(lgd_baseline, device=device, dtype=torch_dtype)
+    portfolio_upb_t = torch.as_tensor(portfolio_data.upb, device=device, dtype=torch_dtype)
+    pd_baseline_t = torch.as_tensor(portfolio_data.pd_baseline, device=device, dtype=torch_dtype)
+    lgd_baseline_t = torch.as_tensor(portfolio_data.lgd_baseline, device=device, dtype=torch_dtype)
 
-    if pd_sensitivity is None:
+    if portfolio_data.pd_sensitivity is None:
         pd_sensitivity_t = torch.ones_like(pd_baseline_t)
     else:
-        pd_sensitivity_t = torch.as_tensor(pd_sensitivity, device=device, dtype=torch_dtype)
+        pd_sensitivity_t = torch.as_tensor(portfolio_data.pd_sensitivity, device=device, dtype=torch_dtype)
 
-    if lgd_sensitivity is None:
+    if portfolio_data.lgd_sensitivity is None:
         lgd_sensitivity_t = torch.ones_like(lgd_baseline_t)
     else:
-        lgd_sensitivity_t = torch.as_tensor(lgd_sensitivity, device=device, dtype=torch_dtype)
+        lgd_sensitivity_t = torch.as_tensor(portfolio_data.lgd_sensitivity, device=device, dtype=torch_dtype)
 
     return (
         portfolio_upb_t,
@@ -546,13 +544,9 @@ def compute_scenario_multipliers(
 
 
 def compute_scenario_losses(
-    portfolio_upb,
-    pd_baseline,
-    lgd_baseline,
+    portfolio_data: PortfolioData,
     scenarios,
     variable_names: Sequence[str] | None = None,
-    pd_sensitivity=None,
-    lgd_sensitivity=None,
     baseline_ur: float = 4.3,
     baseline_hpi_change: float = 0.0,
     backend: str = "cpu",
@@ -577,11 +571,7 @@ def compute_scenario_losses(
         _,
         _,
     ) = _prepare_portfolio_tensors(
-        portfolio_upb=portfolio_upb,
-        pd_baseline=pd_baseline,
-        lgd_baseline=lgd_baseline,
-        pd_sensitivity=pd_sensitivity,
-        lgd_sensitivity=lgd_sensitivity,
+        portfolio_data=portfolio_data,
         backend=backend,
         dtype=dtype,
     )
@@ -707,12 +697,8 @@ def compute_risk_metrics(
 
 
 def run_monte_carlo(
-    portfolio_upb,
-    pd_baseline,
-    lgd_baseline,
+    portfolio_data: PortfolioData,
     macro_stats,
-    pd_sensitivity=None,
-    lgd_sensitivity=None,
     n_simulations: int = 10_000,
     random_seed: int = 42,
     backend: str = "cpu",
@@ -726,18 +712,10 @@ def run_monte_carlo(
 
     Parameters
     ----------
-    portfolio_upb : np.ndarray
-        Original UPB for each loan.
-    pd_baseline : np.ndarray
-        Baseline PD for each loan.
-    lgd_baseline : np.ndarray
-        Baseline LGD for each loan.
+    portfolio_data : PortfolioData
+        Encapsulated loan-level portfolio arrays.
     macro_stats : dict
         Historical macro statistics.
-    pd_sensitivity : np.ndarray, optional
-        Per-loan PD stress sensitivity. If omitted, all loans use 1.0.
-    lgd_sensitivity : np.ndarray, optional
-        Per-loan LGD stress sensitivity. If omitted, all loans use 1.0.
     n_simulations : int
         Number of scenarios.
     random_seed : int
@@ -762,11 +740,7 @@ def run_monte_carlo(
         device,
         torch_dtype,
     ) = _prepare_portfolio_tensors(
-        portfolio_upb=portfolio_upb,
-        pd_baseline=pd_baseline,
-        lgd_baseline=lgd_baseline,
-        pd_sensitivity=pd_sensitivity,
-        lgd_sensitivity=lgd_sensitivity,
+        portfolio_data=portfolio_data,
         backend=backend,
         dtype=dtype,
     )
