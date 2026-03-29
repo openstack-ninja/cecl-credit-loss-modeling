@@ -238,20 +238,20 @@ def calculate_woe_iv_all_features(df, features, target, n_bins=10):
     iv_summary = pd.DataFrame(iv_rows)
     iv_summary = iv_summary.sort_values("iv", ascending=False).reset_index(drop=True)
 
-    # Add IV interpretation
-    def interpret_iv(iv_val):
-        if iv_val < 0.02:
-            return "Not useful"
-        elif iv_val < 0.10:
-            return "Weak"
-        elif iv_val < 0.30:
-            return "Medium"
-        elif iv_val < 0.50:
-            return "Strong"
-        else:
-            return "Suspicious"
-
-    iv_summary["interpretation"] = iv_summary["iv"].apply(interpret_iv)
+    # Add IV interpretation using vectorized np.select
+    conditions = [
+        iv_summary["iv"] < 0.02,
+        iv_summary["iv"] < 0.10,
+        iv_summary["iv"] < 0.30,
+        iv_summary["iv"] < 0.50,
+    ]
+    choices = [
+        "Not useful",
+        "Weak",
+        "Medium",
+        "Strong",
+    ]
+    iv_summary["interpretation"] = np.select(conditions, choices, default="Suspicious")
 
     return iv_summary, results
 
