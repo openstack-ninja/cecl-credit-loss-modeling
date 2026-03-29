@@ -113,11 +113,17 @@ def render():
     # --- Portfolio Composition ---
     section_header("Portfolio Composition")
 
-    # Use parquet if available (local), otherwise small CSVs (deployed)
     loan_df = load_ecl_loan_level()
-    fico_csv = load_fico_summary()
-    ltv_csv = load_ltv_summary()
-    vintage_csv = load_vintage_summary()
+
+    if loan_df is None:
+        # Fall back to small CSVs if local parquet is unavailable (e.g., in deployed environment)
+        fico_csv = load_fico_summary()
+        ltv_csv = load_ltv_summary()
+        vintage_csv = load_vintage_summary()
+    else:
+        fico_csv = None
+        ltv_csv = None
+        vintage_csv = None
 
     has_data = loan_df is not None or fico_csv is not None
 
