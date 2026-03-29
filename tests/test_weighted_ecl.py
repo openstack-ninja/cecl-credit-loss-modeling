@@ -16,6 +16,7 @@ class MockNP:
 # Inject mocks if not already present in the environment
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MockNP()
+
 if 'pandas' not in sys.modules:
     sys.modules['pandas'] = MagicMock()
 
