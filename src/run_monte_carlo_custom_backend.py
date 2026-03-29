@@ -38,6 +38,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from pd_model import apply_woe_transformation
+from monte_carlo import PortfolioData
 from loan_specific_multipliers import build_loan_specific_sensitivities
 from monte_carlo_custom_backend import (
     compute_historical_macro_stats,
@@ -167,20 +168,16 @@ def write_standard_files(losses, scenarios, metrics, sensitivity_df):
 
 
 def sensitivity_analysis_custom(
-    portfolio_upb,
-    pd_baseline,
-    lgd_baseline,
+    portfolio_data: PortfolioData,
     macro_stats,
-    pd_sensitivity,
-    lgd_sensitivity,
     backend,
     dtype,
     scenario_batch_size,
     loan_chunk_size,
 ):
     """One-at-a-time sensitivity analysis using loan-specific multipliers."""
-    total_balance = portfolio_upb.sum()
-    baseline_loss = float((portfolio_upb * pd_baseline * lgd_baseline).sum())
+    total_balance = portfolio_data.upb.sum()
+    baseline_loss = float((portfolio_data.upb * portfolio_data.pd_baseline * portfolio_data.lgd_baseline).sum())
 
     variables_to_shock = {
         "unemployment_rate": [4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0],
@@ -204,12 +201,8 @@ def sensitivity_analysis_custom(
 
         scenarios_df = pd.DataFrame(scenario_rows)
         losses, scored = compute_scenario_losses(
-            portfolio_upb=portfolio_upb,
-            pd_baseline=pd_baseline,
-            lgd_baseline=lgd_baseline,
+            portfolio_data=portfolio_data,
             scenarios=scenarios_df,
-            pd_sensitivity=pd_sensitivity,
-            lgd_sensitivity=lgd_sensitivity,
             backend=backend,
             dtype=dtype,
             scenario_batch_size=scenario_batch_size,
@@ -351,6 +344,14 @@ def main():
     macro_stats = compute_historical_macro_stats(macro_path)
     timings["macro_stats_seconds"] = time.time() - step_start
 
+    portfolio_data = PortfolioData(
+        upb=portfolio_upb,
+        pd_baseline=pd_baseline,
+        lgd_baseline=lgd_baseline,
+        pd_sensitivity=pd_sensitivity,
+        lgd_sensitivity=lgd_sensitivity,
+    )
+
     # ------------------------------------------------------------------
     # Step 4: Run Monte Carlo simulation
     # ------------------------------------------------------------------
@@ -360,12 +361,8 @@ def main():
     print(f"{'='*70}")
 
     losses, scenarios = run_monte_carlo(
-        portfolio_upb=portfolio_upb,
-        pd_baseline=pd_baseline,
-        lgd_baseline=lgd_baseline,
+        portfolio_data=portfolio_data,
         macro_stats=macro_stats,
-        pd_sensitivity=pd_sensitivity,
-        lgd_sensitivity=lgd_sensitivity,
         n_simulations=args.n_simulations,
         random_seed=args.random_seed,
         backend=args.backend,
@@ -407,12 +404,8 @@ def main():
     print(f"{'='*70}")
 
     sensitivity_df = sensitivity_analysis_custom(
-        portfolio_upb=portfolio_upb,
-        pd_baseline=pd_baseline,
-        lgd_baseline=lgd_baseline,
+        portfolio_data=portfolio_data,
         macro_stats=macro_stats,
-        pd_sensitivity=pd_sensitivity,
-        lgd_sensitivity=lgd_sensitivity,
         backend=args.backend,
         dtype=args.dtype,
         scenario_batch_size=args.scenario_batch_size,

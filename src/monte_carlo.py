@@ -25,12 +25,25 @@ Author: Saurabh Chavan
 """
 
 import time
+import dataclasses
 import warnings
 import numpy as np
 import pandas as pd
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
+
+
+@dataclasses.dataclass
+class PortfolioData:
+    """
+    Encapsulates loan-level portfolio data required for Monte Carlo simulation.
+    """
+    upb: np.ndarray
+    pd_baseline: np.ndarray
+    lgd_baseline: np.ndarray
+    pd_sensitivity: np.ndarray | None = None
+    lgd_sensitivity: np.ndarray | None = None
 
 
 def compute_historical_macro_stats(macro_csv_path):
@@ -228,9 +241,7 @@ def compute_scenario_multipliers(scenarios_df, baseline_ur=4.3, baseline_hpi_cha
 
 
 def run_monte_carlo(
-    portfolio_upb,
-    pd_baseline,
-    lgd_baseline,
+    portfolio_data: PortfolioData,
     macro_stats,
     n_simulations=10_000,
     random_seed=42,
@@ -248,12 +259,8 @@ def run_monte_carlo(
 
     Parameters
     ----------
-    portfolio_upb : np.array
-        Original UPB for each loan.
-    pd_baseline : np.array
-        Baseline PD for each loan.
-    lgd_baseline : np.array
-        Baseline LGD for each loan.
+    portfolio_data : PortfolioData
+        Encapsulated loan-level portfolio arrays.
     macro_stats : dict
         Historical macro statistics.
     n_simulations : int
@@ -272,8 +279,8 @@ def run_monte_carlo(
     t0 = time.time()
 
     # Pre-compute baseline expected loss per loan (annual)
-    baseline_el_per_loan = pd_baseline * lgd_baseline * portfolio_upb
-    total_balance = portfolio_upb.sum()
+    baseline_el_per_loan = portfolio_data.pd_baseline * portfolio_data.lgd_baseline * portfolio_data.upb
+    total_balance = portfolio_data.upb.sum()
 
     # Generate correlated scenarios
     scenarios = generate_correlated_scenarios(n_simulations, macro_stats, random_seed)
@@ -374,7 +381,7 @@ def compute_risk_metrics(losses, total_balance):
     return metrics
 
 
-def sensitivity_analysis(portfolio_upb, pd_baseline, lgd_baseline,
+def sensitivity_analysis(portfolio_data: PortfolioData,
                          macro_stats, n_simulations=5000):
     """
     One-at-a-time sensitivity analysis.
@@ -384,7 +391,8 @@ def sensitivity_analysis(portfolio_upb, pd_baseline, lgd_baseline,
 
     Parameters
     ----------
-    portfolio_upb, pd_baseline, lgd_baseline : portfolio data
+    portfolio_data : PortfolioData
+        Encapsulated loan-level portfolio arrays.
     macro_stats : historical statistics
     n_simulations : int
 
@@ -393,8 +401,8 @@ def sensitivity_analysis(portfolio_upb, pd_baseline, lgd_baseline,
     pd.DataFrame
         Sensitivity results.
     """
-    baseline_el = (pd_baseline * lgd_baseline * portfolio_upb).sum()
-    total_balance = portfolio_upb.sum()
+    baseline_el = (portfolio_data.pd_baseline * portfolio_data.lgd_baseline * portfolio_data.upb).sum()
+    total_balance = portfolio_data.upb.sum()
 
     variables_to_shock = {
         "unemployment_rate": [4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0],
