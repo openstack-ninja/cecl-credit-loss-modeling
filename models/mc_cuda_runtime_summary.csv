@@ -1,0 +1,2 @@
+backend,n_simulations,random_seed,dtype,baseline_scoring_seconds,loan_specific_sensitivity_seconds,macro_stats_seconds,monte_carlo_seconds,risk_metrics_seconds,sensitivity_seconds,save_seconds,total_runtime_seconds
+cuda,100,42,float32,2.84716796875,6.14512038230896,0.015585184097290039,2.7185544967651367,0.13650059700012207,0.04882955551147461,0.0042498111724853516,11.916048526763916
