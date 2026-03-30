@@ -1,6 +1,7 @@
 ##
 # python run_cecl_pipeline.py --data_dir ./data/fannie --gse fannie --cores 64 --output fannie_results.parquet
 # python run_cecl_pipeline.py --data_dir ./data/freddie --gse freddie --cores 64 --output freddie_results.parquet
+# for f in *.csv; do mv "$f" "Acquisition_${f%.csv}.txt"; done
 ##
 
 import os

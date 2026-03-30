@@ -56,7 +56,10 @@ playwright install
 
 
 
-#
+##
+export FANNIE_MAE_EMAIL=mimic-hushes-03@icloud.com
+export FANNIE_MAE_PASSWORD=diqji3-ziwsis-hivzYq
+
 python3 download_data.py 
 
 #run
