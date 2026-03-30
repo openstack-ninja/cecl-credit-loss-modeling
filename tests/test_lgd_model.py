@@ -10,13 +10,24 @@ from unittest.mock import MagicMock
 # However, the user clarified that we should just write the test using real pandas
 # and numpy. We'll only mock the modules we don't need for the test.
 
-if 'joblib' not in sys.modules:
+try:
+    import joblib
+except ImportError:
     sys.modules['joblib'] = MagicMock()
-if 'sklearn' not in sys.modules:
+
+try:
+    import sklearn
+except ImportError:
     sys.modules['sklearn'] = MagicMock()
-if 'sklearn.linear_model' not in sys.modules:
+
+try:
+    import sklearn.linear_model
+except ImportError:
     sys.modules['sklearn.linear_model'] = MagicMock()
-if 'sklearn.metrics' not in sys.modules:
+
+try:
+    import sklearn.metrics
+except ImportError:
     sys.modules['sklearn.metrics'] = MagicMock()
 
 import numpy as np
