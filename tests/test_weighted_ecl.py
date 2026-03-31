@@ -1,24 +1,6 @@
 import sys
 import unittest
-from unittest.mock import MagicMock
 import os
-
-# A robust way to mock dependencies for testing in isolation,
-# while still providing functional logic for critical utilities.
-class MockNP:
-    def isclose(self, a, b, **kwargs):
-        return abs(a - b) < 1e-08
-
-    # Forward common attributes to MagicMock
-    def __getattr__(self, name):
-        return MagicMock()
-
-# Inject mocks if not already present in the environment
-if 'numpy' not in sys.modules:
-    sys.modules['numpy'] = MockNP()
-
-if 'pandas' not in sys.modules:
-    sys.modules['pandas'] = MagicMock()
 
 # Import the code to test
 # Ensure 'src' is in path for imports
