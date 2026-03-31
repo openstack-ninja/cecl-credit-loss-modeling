@@ -1,17 +1,16 @@
-##
-#Enable the Gmail API
-#Before running the code, you need to register your "App" (the script) with Google:
-#Go to the Google Cloud Console.
-#Create a new project (e.g., "DGX-CECL-Reports").
-#Navigate to APIs & Services > Library and search for "Gmail API"—click Enable.
-#Go to OAuth consent screen, select External, and add your email as a Test User.
-#Go to Credentials, click Create Credentials > OAuth client ID, and select Desktop App.
-#Download the JSON file, rename it to credentials.json, and place it in your script folder.
-##
-# pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-#
-## Runs the Fannie Mae pipeline every Monday at 1:00 AM
-##0 1 * * 1 /usr/bin/python3 /home/user/run_cecl_pipeline.py --data_dir /data/fannie --gse fannie && /usr/bin/python3 /home/user/send_report.py
+"""
+Enable the Gmail API
+Before running the code, you need to register your "App" (the script) with Google:
+1. Go to the Google Cloud Console.
+2. Create a new project (e.g., "DGX-CECL-Reports").
+3. Navigate to APIs & Services > Library and search for "Gmail API"—click Enable.
+4. Go to OAuth consent screen, select External, and add your email as a Test User.
+5. Go to Credentials, click Create Credentials > OAuth client ID, and select Desktop App.
+6. Download the JSON file, rename it to credentials.json, and place it in your script folder.
+
+Runs the Fannie Mae pipeline every Monday at 1:00 AM
+0 1 * * 1 /usr/bin/python3 /home/user/run_cecl_pipeline.py --data_dir /data/fannie --gse fannie && /usr/bin/python3 /home/user/send_report.py
+"""
 
 import os
 import base64
