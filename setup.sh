@@ -1,32 +1,18 @@
-#
+#!/usr/bin/env bash
+set -e
+
 # container support
-# # As of early 2026, use the 25.12 or newer tag
+# As of early 2026, use the 25.12 or newer tag
 # docker pull nvcr.io/nvidia/pytorch:25.12-py3
 #
 # run container
-#docker run --gpus all -it --rm --ipc=host nvcr.io/nvidia/pytorch:25.12-py3
+# docker run --gpus all -it --rm --ipc=host nvcr.io/nvidia/pytorch:25.12-py3
 #
-## Use the NVIDIA Blackwell-optimized base
-#FROM nvcr.io/nvidia/pytorch:25.12-py3
+# docker pull nvcr.io/nvidia/rapidsai/rapidsai:25.12-cuda13.0-py3.12
 #
-## Install additional data science tools
-#RUN pip install --no-cache-dir \
-#    joblib \
-#    scikit-learn \
-#    pandas \
-#    matplotlib
-#
-#docker pull nvcr.io/nvidia/rapidsai/rapidsai:25.12-cuda13.0-py3.12
-## Set your working directory
-#WORKDIR /workspace
-##
-#
-##
-#docker build -t spark-ml-env .
-#docker run --gpus all -it --rm -v $(pwd):/workspace spark-ml-env
-#
-#
-#
+# docker build -t spark-ml-env .
+# docker run --gpus all -it --rm -v $(pwd):/workspace spark-ml-env
+
 # virtual environments to avoid conflicts
 python3 -m venv .venv
 source .venv/bin/activate
