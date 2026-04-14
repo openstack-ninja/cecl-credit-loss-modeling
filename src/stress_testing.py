@@ -152,7 +152,14 @@ def score_portfolio_under_scenario(
     from pd_model import apply_woe_transformation
 
     # Create a copy of relevant columns with macro overrides
-    df_scenario = portfolio_df.copy()
+    required_cols = set(pd_features) | set(lgd_features) | set(macro_overrides.keys())
+    if "fico_x_unemployment" in portfolio_df.columns:
+        required_cols.add("fico_x_unemployment")
+        required_cols.add("borrower_credit_score")
+
+    cols_to_copy = list(required_cols.intersection(portfolio_df.columns))
+    df_scenario = portfolio_df[cols_to_copy].copy()
+
     for feat, val in macro_overrides.items():
         if feat in df_scenario.columns:
             df_scenario[feat] = val
